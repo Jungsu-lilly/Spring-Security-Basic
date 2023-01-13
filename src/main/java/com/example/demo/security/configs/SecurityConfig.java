@@ -1,5 +1,6 @@
 package com.example.demo.security.configs;
 
+import com.example.demo.security.handler.CustomAccessDeniedHandler;
 import com.example.demo.security.handler.CustomAuthenticationSuccessHandler;
 import com.example.demo.security.provider.FormAuthenticationProvider;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
@@ -74,8 +76,20 @@ public class SecurityConfig {   // 설정 클래스
                 .defaultSuccessUrl("/")
                 .successHandler(customAuthenticationSuccessHandler)
                 .failureHandler(customAuthenticationFailureHandler)
-                .permitAll(); // 로그인 페이지는 인증받지 않은 사용자도 접근 가능해야함
+                .permitAll() // 로그인 페이지는 인증받지 않은 사용자도 접근 가능해야함
+                .and()
+                .exceptionHandling()
+                .accessDeniedHandler(accessDeniedHandler());
+
 
         return http.build();
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        CustomAccessDeniedHandler accessDeniedHandler = new CustomAccessDeniedHandler();
+        accessDeniedHandler.setErrorPage("/denied");
+
+        return accessDeniedHandler;
     }
 }
