@@ -38,7 +38,10 @@ public class SecurityConfig {   // 설정 클래스
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer(){
-        return (web) -> web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+        return (web) -> {
+            web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+            web.ignoring().antMatchers("/favicon.ico", "/resources/**", "/error");
+        };
     }
 
     @Bean
