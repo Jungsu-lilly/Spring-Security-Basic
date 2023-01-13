@@ -1,17 +1,22 @@
 package com.example.demo.security.configs;
 
+import com.example.demo.repository.UserRepository;
+import com.example.demo.security.provider.CustomAuthenticationProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
@@ -20,26 +25,25 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@Slf4j
 public class SecurityConfig {   // 설정 클래스
 
+    @Autowired
+    private UserDetailsService userDetailsService;
+
     @Bean
-    public InMemoryUserDetailsManager userDetails(AuthenticationManagerBuilder auth) throws Exception{
-
-        String password = passwordEncoder().encode("1111");
-
-        UserDetails user1 = User.builder()
-                .username("user").password(password).roles("USER").build();
-        UserDetails user2 = User.builder()
-                .username("manager").password(password).roles("MANAGER", "USER").build();
-        UserDetails user3 = User.builder()
-                .username("admin").password(password).roles("ADMIN","USER","MANAGER").build();
-
-        return new InMemoryUserDetailsManager(user1, user2, user3);
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfiguration) throws Exception {
+        return authConfiguration.getAuthenticationManager();
     }
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer(){
         return (web) -> web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+    }
+
+    @Bean
+    public CustomAuthenticationProvider customAuthenticationProvider(){
+        return new CustomAuthenticationProvider();
     }
 
     @Bean
@@ -59,7 +63,11 @@ public class SecurityConfig {   // 설정 클래스
                 .anyRequest().authenticated()
 
                 .and()
-                .formLogin();
+                .formLogin()
+                .loginPage("/login")
+                .loginProcessingUrl("/login_proc")
+                .defaultSuccessUrl("/")
+                .permitAll(); // 로그인 페이지는 인증받지 않은 사용자도 접근 가능해야함
 
         return http.build();
     }
